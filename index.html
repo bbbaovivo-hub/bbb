@@ -1319,25 +1319,22 @@ chatInput.addEventListener('keypress', (e) => {
 // ---------- RECEBER MENSAGENS ----------
 onChildAdded(ref(db, "chat"), snapshot => {
     const data = snapshot.val();
-    if(!data) return;
+    if (!data) return;
 
     const msg = document.createElement('div');
+    msg.className = 'msg';
+    msg.innerHTML = `<b>${data.user}:</b> ${data.message}`;
 
-    // ✅ Verifica se o UID da mensagem está nos admins
-    onValue(ref(db, "admins/" + data.userId), snap => {
-        const isAdmin = snap.exists();
+    messageBox.appendChild(msg);
+    messageBox.scrollTop = messageBox.scrollHeight;
 
-        if(isAdmin){
-            msg.className = 'msg admin-msg'; // aplica estilo de admin
+    // 🔎 Verifica admin SEM atrasar a renderização
+    get(ref(db, "admins/" + data.userId)).then(snap => {
+        if (snap.exists()) {
+            msg.classList.add('admin-msg');
             msg.innerHTML = `✦ <b>${data.user} [ADMIN]:</b> ${data.message}`;
-        } else {
-            msg.className = 'msg';
-            msg.innerHTML = `<b>${data.user}:</b> ${data.message}`;
         }
-
-        messageBox.appendChild(msg);
-        messageBox.scrollTop = messageBox.scrollHeight;
-    }, { onlyOnce: true });
+    });
 });
       
       /* AJUDA */
