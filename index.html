@@ -1091,8 +1091,20 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
-import { getDatabase, ref, onChildAdded, set, onDisconnect, onValue, push, remove } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
-
+import { 
+  getDatabase, 
+  ref, 
+  onChildAdded, 
+  set, 
+  onDisconnect, 
+  onValue, 
+  push, 
+  remove,
+  query,
+  orderByChild,
+    get
+} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
+    
 const firebaseConfig = {
  apiKey: "AIzaSyB-zO8hXZfSHNjAvYMRk7zRlWAmSNqcE00",
   authDomain: "bbb-aovivo-5b344.firebaseapp.com",
