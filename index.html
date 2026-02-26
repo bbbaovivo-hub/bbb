@@ -123,16 +123,55 @@ header span { color: var(--primary); }
 .cam-track {
     display: flex;
     gap: 10px;
-    padding: 6px 15px;
+    padding: 4px 15px;
     overflow-x: auto;
     scroll-behavior: smooth;
     background: #111114;
 }
-.cam-track::-webkit-scrollbar { height: 8px; }
-.cam-track::-webkit-scrollbar-thumb { background: var(--gray); border-radius: 2px; }
+
+    /* INÍCIO: NOVO CÓDIGO - Estilos para Scrollbar e Cursor do Cam-Track */
+    .cam-track {
+        -webkit-overflow-scrolling: touch; /* Melhora a rolagem em iOS */
+        cursor: grab; /* Cursor padrão para indicar que pode ser arrastado */
+    }
+
+    .cam-track.grabbing {
+        cursor: grabbing; /* Cursor quando o usuário está arrastando */
+        user-select: none; /* Impede a seleção de texto durante o arrasto */
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+
+    /* Estilo da Scrollbar para Webkit (Chrome, Safari) */
+    .cam-track::-webkit-scrollbar {
+        height: 8px; /* Altura da barra de rolagem */
+    }
+
+    .cam-track::-webkit-scrollbar-track {
+        background: #111114; /* Fundo da trilha da scrollbar, combinando com o fundo do cam-track */
+    }
+
+    .cam-track::-webkit-scrollbar-thumb {
+        background: var(--primary);  /* Cor lilás suave do 'primary' com transparência */
+        border-radius: 10px; /* Bordas arredondadas */
+        border: 2px solid #111114; /* Borda para centralizar o "thumb" e parecer mais discreto */
+    }
+
+    .cam-track::-webkit-scrollbar-thumb:hover {
+        background: rgba(99, 102, 241, 0.7); /* Mais visível no hover */
+    }
+
+    /* Estilo da Scrollbar para Firefox (se for o caso) */
+    .cam-track {
+        scrollbar-width: thin; /* Largura fina da scrollbar */
+        scrollbar-color: rgba(99, 102, 241, 0.4) #111114; /* Cor do 'thumb' e do 'track' */
+    }
+    /* FIM: NOVO CÓDIGO */
+
 .cam-card {
-    min-width: 100px;
-    height: 50px;
+    min-width: 95px;
+    height: 45px;
     background: #27272a;
     border-radius: 10px;
     display: flex;
@@ -250,7 +289,7 @@ header span { color: var(--primary); }
 
 
 .messages {
-    height: 250px;
+    height: 295px;
     padding: 12px 20px;
     overflow-y: auto;
     word-wrap: break-word;
@@ -268,20 +307,25 @@ header span { color: var(--primary); }
     animation: msgAppear 0.4s ease;
 }
 
-.msg b { color: #aaa; font-weight: 500; }
+
+
 
 .input-area {
     display: flex;
     gap: 5px;
-    padding: 8px 20px 25px;
-    background: #0f0f12;
+    padding: 6px 15px 12px;
+    background: transparent;
     border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative; /* Adicione esta linha */
+    flex-wrap: wrap; /* Permite que o input e o botão quebrem linha se o preview for grande, embora não deve acontecer */
+    align-items: flex-end; /* Alinha os itens para baixo quando o preview está acima */
 }
 
 .input-area input {
     flex: 1;
     background: #1b1b24; /* fundo destacado */
-    border: 1px solid rgba(99,102,241,0.35); /* lilás */
+    border: 0.7px solid #6366f1; /* lilás */
     border-radius: 14px;
     padding: 12px 18px;
     color: #fff;
@@ -369,6 +413,18 @@ button {
     border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(99,102,241,0.25);
 }
+
+    /* INÍCIO: NOVO CÓDIGO - Estilo para Mensagem de Erro do Nome */
+    .name-box .name-error {
+        color: #ef4444; /* Cor vermelha para o erro */
+        font-size: 0.75rem; /* Tamanho discreto */
+        margin-top: -10px; /* Ajusta a margem para ficar mais próximo do input */
+        margin-bottom: 15px; /* Espaçamento com o botão */
+        text-align: center;
+        font-weight: 500;
+        animation: fadeIn 0.3s ease; /* Animação suave */
+    }
+    /* FIM: NOVO CÓDIGO */
 
 .name-box button {
     width: 100%;
@@ -658,13 +714,7 @@ button {
     word-wrap: break-word;
     white-space: pre-wrap;
 }
-.admin-msg b {
-    color: #ffffff;            /* mantém o nome branco */
-}
-}
-.admin-msg b {
-    color: #ffffff;            /* mantém o nome branco */
-}
+
     
     /* CONTAINER */
 .side-menu-content {
@@ -701,6 +751,7 @@ button {
     color: white;
     border-radius: 14px;
     padding: 0 20px;
+    height: 40px;
     font-size: 18px;
     cursor: pointer;
 
@@ -838,6 +889,437 @@ button {
         min-height: 100dvh;
     }
 } 
+   
+   
+
+/* Estilo do timestamp dentro da mensagem */
+.msg-time {
+    font-size: 0.65rem; /* Fonte um pouco menor para ser discreto */
+    color: #a1a1aa; /* Cor cinza mais próxima do muted, para boa visibilidade e discrição */
+    opacity: 0; /* Levemente mais visível que antes */
+    
+    /* Posicionamento absoluto - flutua sobre o conteúdo */
+    position: absolute;
+    right: 8px; /* Ajustado para um pouco mais próximo da borda direita */
+    bottom: 2px; /* Reduzido para ficar bem no cantinho inferior */
+    white-space: nowrap; /* Evita que o horário quebre em várias linhas */
+    line-height: 1; /* Garante que a altura da linha não afete o posicionamento */
+    z-index: 1; /* Garante que ele fique por cima do texto, se houver sobreposição */
+    background-color: transparent; /* Garante que não tenha fundo que "cubra" o texto da mensagem */
+}
+
+/* Ajuste para a bolha da mensagem */
+.msg {
+    position: relative; /* FUNDAMENTAL para que o posicionamento absoluto do .msg-time funcione */
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px; /* **VOLTAMOS AO PADDING ORIGINAL** para não aumentar a bolha */
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    animation: msgAppear 0.4s ease;
+    /* Removido o min-height, a bolha deve se adaptar ao seu conteúdo */
+}
+
+/* Estilo para o conteúdo da mensagem dentro da bolha */
+.message-content {
+    /* O texto deve ocupar o máximo de espaço, mas sem sobrepor o timestamp. */
+    /* Usaremos padding-right para evitar que o texto invada a área do timestamp */
+    padding-right: 45px; /* Adiciona espaço à direita para o timestamp não colidir com o texto */
+    display: block; /* Garante que ele se comporte como um bloco para o padding funcionar bem */
+    word-wrap: break-word; /* Garante que o texto quebre */
+}
+
+/* Estilo para o nome do usuário */
+.msg b {
+    color: #aaa;
+    font-weight: 500;
+    margin-right: 5px; /* Espaço entre o nome e a mensagem */
+}
+
+/* Ajustes para a mensagem de admin */
+.admin-msg {
+    background-color: #5752d4;
+    color: #ffffff;
+}
+.admin-msg .msg-time { /* Opcional: ajustar cor do timestamp para admins */
+    color: rgba(255, 255, 255, 0.7);
+}
+.admin-msg b {
+    color: #ffffff;
+}
+
+
+
+
+/* --- ESTILOS PARA O SISTEMA DE REPLY --- */
+
+/* Container do Preview de Resposta (mantenho como está, parece que está ok visualmente) */
+/* Input-area agora é o pai relativo */
+.reply-preview-container {
+    display: none; /* Esconde por padrão */
+    background: #1b1b24; /* Fundo similar ao input */
+    border-top: 1px solid var(--border);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    padding: 8px 12px;
+    /* Removido o margin, agora o posicionamento é absoluto */
+    /* display: flex; */
+    align-items: center;
+    gap: 8px;
+    position: absolute; /* Adicione esta linha */
+    bottom: 100%; /* Posiciona acima do input-area, no topo */
+    left: 0;
+    right: 0;
+    width: 100%; /* Garante que ele ocupe a largura total do input-area */
+    box-sizing: border-box; /* Adicionado para padding não aumentar a largura total */
+    z-index: 10; /* Garante que ele fique por cima de outros elementos */
+/* === CÓDIGO DO FADE IN/OUT NO CSS === */
+    opacity: 0; /* Começa totalmente transparente */
+    visibility: hidden; /* Escondido, não interageível */
+    transition: opacity 0.2s ease-out, visibility 0.2s step-end;
+    /* A transição de visibility com step-end faz ele desaparecer completamente só no final da animação */
+    /* === FIM CÓDIGO DO FADE IN/OUT NO CSS === */
+}
+
+    .reply-preview-container.active {
+        display: flex; /* Mantenha 'flex' para exibir o conteúdo */
+        /* === CÓDIGO DO FADE IN/OUT NO CSS === */
+        opacity: 1; /* Fica totalmente visível */
+        visibility: visible; /* Fica visível e interageível */
+        transition: opacity 0.2s ease-out, visibility 0.2s step-start;
+        /* A transição de visibility com step-start faz ele aparecer imediatamente */
+        /* === FIM CÓDIGO DO FADE IN/OUT NO CSS === */
+    }
+
+
+
+
+    .reply-bar {
+        width: 4px;
+        height: 100%;
+        background-color: var(--primary); /* Cor lilás */
+        position: absolute;
+        left: 0;
+        top: 0;
+        border-top-left-radius: 12px; /* NOVO: Arredonda o canto superior esquerdo */
+        border-bottom-left-radius: 12px; /* NOVO: Arredonda o canto inferior esquerdo (se o preview tiver borda inferior arredondada também) */
+    }
+
+.reply-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    padding-left: 8px; /* Espaço para a barra lateral */
+    min-width: 0; /* Permite que o conteúdo encolha se necessário */
+}
+
+.reply-name {
+    font-weight: 600;
+    color: var(--primary); /* Nome em destaque */
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2; /* Compacta a altura da linha */
+}
+
+.reply-text {
+    font-size: 0.7rem; /* Levemente menor para ser discreto */
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2; /* Compacta a altura da linha */
+}
+
+.cancel-reply-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s ease;
+    flex-shrink: 0; /* Garante que o botão não encolha */
+}
+
+.cancel-reply-btn:hover {
+    color: var(--text);
+}
+
+/* --- ESTILOS PARA MENSAGENS RESPONDIDAS NO CHAT --- */
+
+/* Ajuste para a bolha da mensagem. Remove paddings extras e deixa que o conteúdo defina a altura. */
+.msg {
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px; /* Mantém o padding original da bolha */
+    border-radius: 12px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    animation: msgAppear 0.4s ease;
+    /* Removi qualquer min-height ou padding-top/bottom extra para que a altura seja fluida */
+    overflow: hidden; /* Garante que tudo dentro da bolha seja contido */
+}
+
+/* A bolha com reply não precisa de padding-top extra, o margin-top do reply-box resolve. */
+.msg.has-reply {
+    /* padding-top: 5px; */ /* Removido: o margin-top do .msg-reply-box será suficiente */
+    padding-bottom: 15px; /* Mantém espaço para o timestamp no canto inferior direito */
+}
+
+.msg-reply-box {
+    background: rgba(99,102,241,0.1); /* Fundo lilás mais suave */
+    border-left: 3px solid var(--primary); /* Barra lateral lilás */
+    padding: 4px 8px; /* REDUZIDO: Menos padding interno para ser mais compacto */
+    border-radius: 6px; /* Mantido, mas pode ser ajustado */
+    margin-top: 7px; /* REDUZIDO: Pequena margem superior para separar do nome do remetente */
+    margin-bottom: 3px; /* REDUZIDO: Pequena margem inferior para separar do texto da mensagem */
+    font-size: 0.8rem; /* Mantido, parece ser um bom tamanho para referência */
+    display: flex; /* Adicionado para permitir flex-direction column nos filhos */
+    flex-direction: column;
+    box-sizing: border-box; /* Garante que o padding não aumente a largura */
+    width: 100%; /* Faz a caixa se ajustar ao conteúdo */
+    max-width: 100%; /* Limita a largura para não esticar demais */
+    margin-left: 0; /* Alinha à esquerda dentro da bolha */
+}
+
+.msg-reply-box .reply-name { /* Seletor mais específico para o nome dentro da caixa de reply */
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.75rem; /* REDUZIDO: Nome dentro da caixa de reply ligeiramente menor */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2; /* Compacta a altura da linha */
+}
+
+.msg-reply-box .reply-text { /* Seletor mais específico para o texto dentro da caixa de reply */
+    color: var(--muted);
+    font-size: 0.7rem; /* REDUZIDO: Texto dentro da caixa de reply bem menor e discreto */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4; /* Compacta a altura da linha */
+}
+
+/* Estilo para o conteúdo da mensagem dentro da bolha */
+    /* Estilo para o conteúdo da mensagem dentro da bolha */
+   .message-content {
+        /* O texto deve ocupar o máximo de espaço, mas sem sobrepor o timestamp. */
+        padding-right: 1px; /* Adiciona espaço à direita para o timestamp não colidir com o texto */
+        display: block;
+        word-wrap: break-word;
+        line-height: 1.4;
+        /* Remova qualquer padding-top ou margin-top que possa estar aqui */
+    }
+/* Estilo para o nome do usuário principal (quem está enviando a mensagem) */
+.msg b {
+    color: #aaa;
+    font-weight: 500;
+    margin-right: 5px;
+    line-height: 1.4; /* Para manter a altura da linha padrão do texto da mensagem */
+    display: inline-block; /* Garante que o nome ocupe apenas o espaço necessário */
+}
+
+/* Gesto de arrastar para a direita */
+.msg.swiping {
+    transform: translateX(40px); /* Move a mensagem para a direita */
+    transition: transform 0.2s ease-out; /* Animação suave */
+}
+
+/* Ajustes para a mensagem de admin */
+.admin-msg {
+    background-color: #5752d4;
+    color: #ffffff;
+}
+.admin-msg .msg-time {
+    color: rgba(255, 255, 255, 0.7);
+}
+.admin-msg b {
+    color: #ffffff;
+}
+
+
+    /* NOVO: Estilo para o nome do remetente (elemento separado) */
+   .message-sender-name {
+        color: var(--muted); /* Use uma cor que se destaque, mas sem ser "chocante" */
+        font-weight: 600; /* Mais negrito para o nome */
+        font-size: 0.85rem; /* Tamanho ligeiramente menor que o texto principal da mensagem, mas maior que o reply */
+        margin-bottom: 4px; /* Espaço entre o nome e o próximo elemento (reply ou mensagem) */
+        line-height: 1.2; /* Compacta a altura da linha */
+        display: block; /* Garante que ocupe a linha inteira */
+    }
+    
+    /* INÍCIO: NOVO CÓDIGO - Estilo para Destaque de Mensagem (Ajustado) */
+    .msg.highlight {
+        background-color: rgba(99, 102, 241, 0.3); /* Um lilás um pouco mais forte para "clarear" */
+        /* Removido o box-shadow para não ter borda */
+        transition: background-color 0.3s ease; /* Transição suave apenas para o background */
+    }
+    /* FIM: NOVO CÓDIGO - Estilo para Destaque de Mensagem (Ajustado) */
+    
+
+    /* Ajuste para o nome do admin */
+.admin-msg .message-sender-name {
+    color: #ffffff; /* agora o nome fica branco */
+}
+    
+    
+    /* 🔴 INÍCIO: NOVO CÓDIGO - Estilos para o botão de scroll */
+.scroll-to-bottom-btn {
+    position: absolute; /* Para flutuar sobre o chat */
+    bottom: 80px; /* Acima do input-area, ajuste conforme necessário */
+    right: 20px; /* Canto inferior direito */
+    padding: 8px 15px;
+    background: rgba(99, 102, 241, 0.9); /* Lilás suave com transparência */
+    color: white;
+    border: none;
+    border-radius: 20px; /* Borda arredondada */
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    opacity: 0; /* Escondido por padrão */
+    visibility: hidden; /* Escondido por padrão */
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.2s ease;
+    z-index: 100; /* Garante que fique acima de outros elementos */
+    display: flex; /* Para centralizar o ícone e texto */
+    align-items: center;
+    gap: 5px; /* Espaço entre texto e ícone (se adicionar) */
+}
+
+.scroll-to-bottom-btn.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll-to-bottom-btn:hover {
+    background: rgba(99, 102, 241, 1); /* Um pouco mais opaco no hover */
+    transform: translateY(-2px); /* Efeito de "levantar" */
+}
+
+.scroll-to-bottom-btn:active {
+    transform: translateY(0); /* Efeito de "clique" */
+}
+
+/* Ajuste para o layout em PC, onde o chat tem altura definida */
+@media (min-width: 1024px) {
+   .chat-container {
+        position: relative; /* Para o posicionamento absoluto do botão funcionar dentro dele */
+    }
+   .scroll-to-bottom-btn {
+        bottom: 120px; /* Mantenha para desktop */
+    }
+}
+/* 🔴 FIM: NOVO CÓDIGO */
+
+
+
+    /* ESTILO PARA HASHTAGS */
+    .hashtag {
+            /* === INÍCIO DO CÓDIGO DO DEGRADÊ NO TEXTO === */
+    background: linear-gradient(to right, #FF00FF, #FF69B4); /* Degradê do fúcsia (#FF00FF) para o rosa neon (#FF69B4) */
+    -webkit-background-clip: text; /* "Recorta" o fundo para usar apenas no formato do texto */
+    -webkit-text-fill-color: transparent; /* Torna a cor do texto transparente para mostrar o fundo */
+    
+        font-weight: bold;
+    }
+    
+    
+        /* INÍCIO: NOVO CÓDIGO - Estilos para Limite de Caracteres e Proteção de Layout */
+    .input-area {
+        position: relative; /* Garante que o contador se posicione corretamente */
+    }
+
+    .char-count {
+        position: absolute;
+        bottom: 12px; /* Ajuste para posicionar acima do input */
+        right: 80px; /* Ajuste para ficar à esquerda do botão de enviar */
+        font-size: 0.7rem;
+        color: var(--muted);
+        background-color: transparent; /* Certifica que não tem fundo */
+        padding: 2px 5px;
+        border-radius: 5px;
+        z-index: 5; /* Garante que ele fique por cima do input */
+        pointer-events: none; /* Não interfere com cliques no input */
+        transition: color 0.2s ease; /* Transição de cor suave */
+    }
+
+    .char-count.error {
+        color: #ef4444; /* Cor vermelha para quando o limite for excedido */
+        font-weight: bold;
+    }
+
+    /* Proteção contra overflow para mensagens muito grandes */
+    .messages {
+        overflow-wrap: break-word; /* Quebra palavras longas */
+        word-break: break-word; /* Força a quebra de palavra para qualquer caractere */
+    }
+
+    .msg .message-content {
+        max-width: 100%; /* Garante que o conteúdo não exceda a largura da bolha */
+        overflow: hidden; /* Oculta qualquer coisa que tente escapar, embora break-word deve resolver */
+    }
+
+    /* Ajuste para o input quando o preview de resposta está ativo */
+    .reply-preview-container.active + #chatInput {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-top: none;
+    }
+    /* FIM: NOVO CÓDIGO */
+    
+    
+    
+        /* INÍCIO: NOVO CÓDIGO - Estilos para Aviso Anti-Flood */
+    .flood-warning {
+        width: 100%;
+        text-align: center;
+        background-color: #ef4444; /* Vermelho vibrante */
+        color: white;
+        padding: 8px 10px;
+        border-radius: 8px;
+        margin-bottom: 10px; /* Espaço abaixo do aviso */
+        font-size: 0.9rem;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        /* Garante que apareça acima do input */
+        position: relative; 
+        z-index: 15; 
+        box-sizing: border-box; /* Garante que padding não aumente a largura */
+    }
+
+    /* Ajuste para quando o aviso de flood estiver ativo, o input e o contador podem precisar de reposicionamento */
+    .input-area.flood-active .char-count {
+        bottom: auto; /* Desfaz o posicionamento fixo */
+        top: 12px; /* Posiciona no topo do input */
+        right: 80px;
+    }
+
+    /* Ajuste para o input quando o preview de resposta está ativo E flood ativo */
+    .input-area.flood-active .reply-preview-container.active + #chatInput {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+        border-top: none;
+    }
+    /* FIM: NOVO CÓDIGO - Estilos para Aviso Anti-Flood */
+    
+    
+        /* NOVO ESTILO: Marcador de resposta para o usuário */
+    .msg-reply-marker {
+        position: absolute; /* Posição absoluta dentro da bolha da mensagem */
+        top: 8px; /* Alinhado com o topo, como o nome */
+        right: 12px; /* Alinhado à direita */
+        font-size: 0.7rem; /* Tamanho pequeno */
+        color: var(--primary); /* Cor lilás do tema */
+        font-weight: 500; /* Peso da fonte */
+        z-index: 2; /* Garante que fique por cima de outros conteúdos se houver sobreposição */
+    }
+
     
     
     
@@ -852,6 +1334,9 @@ button {
     }
     window.BBB_USER_ID = userId;
 })();
+
+
+
 </script>
 
 </head>
@@ -920,8 +1405,28 @@ button {
 
 <div class="chat-container">
     <div class="messages" id="messageBox"></div>
-    <div class="input-area">
+        <button id="scrollToBottomBtn" class="scroll-to-bottom-btn">
+        Mensagens recentes ↓
+    </button>
+        <div class="input-area">
+          <!-- INÍCIO: NOVO CÓDIGO - Aviso Anti-Flood -->
+        <div id="floodWarning" class="flood-warning" style="display: none;">
+            Você enviou mensagens muito rápido. Aguarde <span id="floodCountdown">60</span> segundos.
+        </div>
+        <!-- FIM: NOVO CÓDIGO -->
+    <div class="reply-preview-container" id="replyPreviewContainer">
+    <div class="reply-bar"></div>
+    <div class="reply-content">
+        <span id="replyPreviewName" class="reply-name"></span>
+        <span id="replyPreviewText" class="reply-text"></span>
+    </div>
+    <button id="cancelReplyBtn" class="cancel-reply-btn">✕</button>
+</div>
+
         <input type="text" id="chatInput" placeholder="Digite sua mensagem...">
+        <!-- INÍCIO: NOVO CÓDIGO - Contador de Caracteres -->
+            <div id="charCount" class="char-count">0 / 200</div>
+            <!-- FIM: NOVO CÓDIGO -->
         <button id="sendBtn">➤</button>
     </div>
 </div>
@@ -1072,6 +1577,9 @@ button {
         <h2>Bem-vindo 👋</h2>
         <p>Escolha um nome para participar do chat</p>
         <input type="text" id="nameInput" placeholder="Seu nome">
+        <!-- INÍCIO: NOVO CÓDIGO - Mensagem de Erro do Nome -->
+            <p id="nameError" class="name-error" style="display: none;">O nome deve ter no máximo 25 caracteres.</p>
+            <!-- FIM: NOVO CÓDIGO -->
         <button id="enterNameBtn">Entrar</button>
     </div>
 </div>
@@ -1090,7 +1598,7 @@ button {
       
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { 
   getDatabase, 
   ref, 
@@ -1103,17 +1611,17 @@ import {
   query,
   orderByChild,
     get
-} from "https://www.gstatic.com/firebasejs/10.5.0/firebase-database.js";
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
     
-const firebaseConfig = {
- apiKey: "AIzaSyB-zO8hXZfSHNjAvYMRk7zRlWAmSNqcE00",
-  authDomain: "bbb-aovivo-5b344.firebaseapp.com",
-  databaseURL: "https://bbb-aovivo-5b344-default-rtdb.firebaseio.com",
-  projectId: "bbb-aovivo-5b344",
-  storageBucket: "bbb-aovivo-5b344.firebasestorage.app",
-  messagingSenderId: "882564424285",
-  appId: "1:882564424285:web:7d649bc3e30309841463b4"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfwC-5l8fPCvcgrwao9pG7gj9TmOuvLcU", // ESTAS SÃO AS NOVAS INFOS
+      authDomain: "bbb-ao-vivo2.firebaseapp.com",
+      databaseURL: "https://bbb-ao-vivo2-default-rtdb.firebaseio.com",
+      projectId: "bbb-ao-vivo2",
+      storageBucket: "bbb-ao-vivo2.firebasestorage.app",
+      messagingSenderId: "172632221080",
+      appId: "1:172632221080:web:7e3659ee27e0cea434f7ed"
+    };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
@@ -1135,7 +1643,7 @@ fecharBtn.onclick = () => {
     setTimeout(() => {
         modal.style.display = "none";
         modal.classList.remove("hide");
-    }, 250); // tempo igual ao da animação
+    }, 200); // tempo igual ao da animação
 };
       
       
@@ -1255,48 +1763,311 @@ onValue(ref(db, "banidos/" + UID), snap => {
     }
 });
 
-/* ------------------- MODAL NOME ------------------- */
-let chatUsername = localStorage.getItem('chatName');
-const nameModal = document.getElementById('nameModal');
+    /* ------------------- MODAL NOME ------------------- */
+    let chatUsername = localStorage.getItem('chatName');
+    const nameModal = document.getElementById('nameModal');
+    const nameInput = document.getElementById('nameInput'); // Obter referência aqui
+    const nameError = document.getElementById('nameError'); // Obter referência aqui
 
-if(!chatUsername){
-    nameModal.style.display = 'flex';
-} else {
-    nameModal.style.display = 'none';
-    iniciarSistemaAvisos(); // 👈 CHAMA AQUI TAMBÉM
-}
+    // INÍCIO: NOVO CÓDIGO - Funções de Limpeza e Validação do Nome
+    function cleanAndValidateName(inputName) {
+        // 1. Remover espaços no início e no final
+        let cleanedName = inputName.trim();
 
-function saveName() {
-    const nameInput = document.getElementById('nameInput');
-    const name = nameInput.value.trim();
-    if(!name) return alert('Digite um nome válido!');
-    
-    localStorage.setItem('chatName', name);
-    chatUsername = name;
-    
-    document.getElementById("menuUsername").textContent = name;
-    
-    document.getElementById('nameModal').style.display = 'none';
-iniciarSistemaAvisos();
-    
-}    
-    
+        // 2. Reduzir múltiplos espaços internos para apenas um
+        cleanedName = cleanedName.replace(/\s+/g, ' ');
 
-// Botão Entrar
-document.getElementById('enterNameBtn').addEventListener('click', saveName);
+        // 3. Proteger contra HTML e scripts: tratar como texto comum
+        // Cria um elemento temporário para HTML e pega seu texto
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(cleanedName));
+        cleanedName = div.innerHTML; // Isso converte < para &lt; e > para &gt;
 
-// Enter no input do nome
-document.getElementById('nameInput').addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') saveName();
-});
+        return cleanedName;
+    }
+
+    function validateNameLength(name) {
+        const MIN_CHARS = 1;
+        const MAX_CHARS = 25;
+        if (name.length < MIN_CHARS || name.length > MAX_CHARS) {
+            return false;
+        }
+        return true;
+    }
+    // FIM: NOVO CÓDIGO - Funções de Limpeza e Validação do Nome
+
+    if(!chatUsername){
+        nameModal.style.display = 'flex';
+        // Adiciona listener para o input do nome para mostrar a mensagem de erro em tempo real
+        nameInput.addEventListener('input', () => {
+            const currentName = nameInput.value;
+            // Apenas verifica o limite máximo para feedback visual
+            if (currentName.length > 25) {
+                nameError.style.display = 'block';
+                // Opcional: Cortar o texto no input para impedir mais digitação
+                // nameInput.value = currentName.substring(0, 35);
+            } else {
+                nameError.style.display = 'none';
+            }
+        });
+    } else {
+        nameModal.style.display = 'none';
+        iniciarSistemaAvisos();
+    }
+
+    function saveName() {
+        const rawName = nameInput.value;
+        const processedName = cleanAndValidateName(rawName);
+
+        // Validação final do nome processado
+        if (!validateNameLength(processedName)) {
+            nameError.textContent = 'O nome deve ter entre 1 e 25 caracteres.';
+            nameError.style.display = 'block';
+            return; // Impede que o nome seja salvo
+        }
+
+        // Se chegou aqui, o nome é válido e limpo
+        localStorage.setItem('chatName', processedName);
+        chatUsername = processedName;
+        
+        document.getElementById("menuUsername").textContent = processedName; // Atualiza o menu lateral
+        
+        nameModal.style.display = 'none';
+        iniciarSistemaAvisos();
+    }    
+        
+    // Botão Entrar
+    document.getElementById('enterNameBtn').addEventListener('click', saveName);
+
+    // Enter no input do nome
+    document.getElementById('nameInput').addEventListener('keypress', (e) => {
+        if(e.key === 'Enter') saveName();
+    });
 
 /* ------------------- CHAT ------------------- */
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const messageBox = document.getElementById('messageBox');
+// --- VARIÁVEIS E FUNÇÕES GLOBAIS PARA O SISTEMA DE REPLY ---
+let replyingTo = null; // Armazena temporariamente os dados da mensagem sendo respondida
+    // INÍCIO: NOVO CÓDIGO - Variáveis para Limite de Caracteres
+    const MAX_CHARS = 200;
+    const charCountElement = document.getElementById('charCount');
+    // FIM: NOVO CÓDIGO
+    
+        // NOVO: Armazena os IDs das mensagens que este usuário enviou
+    let mySentMessageIds = JSON.parse(localStorage.getItem('mySentMessageIds')) || [];
+    
+        // INÍCIO: NOVO CÓDIGO - Variáveis e Lógica Anti-Flood
+    const FLOOD_MESSAGE_LIMIT = 5; // Quantidade de mensagens para ativar o flood
+    const FLOOD_TIME_WINDOW = 5000; // 5 segundos em milissegundos
+    const FLOOD_BLOCK_DURATION = 60; // 30 segundos de bloqueio
+        // INÍCIO: NOVO CÓDIGO - Chaves para localStorage
+    const LOCAL_STORAGE_FLOOD_START_KEY = 'floodStartTime';
+    const LOCAL_STORAGE_FLOOD_END_KEY = 'floodEndTime';
+    // FIM: NOVO CÓDIGO
+
+    let messagesSentTimestamps = []; // Armazena os timestamps das últimas mensagens enviadas
+    let isFlooded = false; // Flag para indicar se o usuário está bloqueado
+    let floodTimeoutId = null; // ID do timeout para liberar o bloqueio
+    let floodCountdownInterval = null; // ID do intervalo para o contador regressivo
+
+    const floodWarningElement = document.getElementById('floodWarning');
+    const floodCountdownElement = document.getElementById('floodCountdown');
+
+    function checkFlood() {
+        const now = Date.now();
+        // Remove timestamps antigos (fora da janela de 5 segundos)
+        messagesSentTimestamps = messagesSentTimestamps.filter(timestamp => now - timestamp < FLOOD_TIME_WINDOW);
+
+        if (messagesSentTimestamps.length >= FLOOD_MESSAGE_LIMIT) {
+            startFloodProtection();
+            return true; // Usuário foi detectado como floodando
+        }
+        return false; // Não está floodando
+    }
+
+    function startFloodProtection() {
+        if (isFlooded) return; // Já está bloqueado, não faz nada
+
+        const now = Date.now();
+        const blockEndTime = now + (FLOOD_BLOCK_DURATION * 1000); // Calcula o tempo de fim do bloqueio
+
+        // INÍCIO: NOVO CÓDIGO - Salvar estado no localStorage
+        localStorage.setItem(LOCAL_STORAGE_FLOOD_START_KEY, now.toString());
+        localStorage.setItem(LOCAL_STORAGE_FLOOD_END_KEY, blockEndTime.toString());
+        // FIM: NOVO CÓDIGO
+
+        isFlooded = true;
+        sendBtn.disabled = true; // Desabilita o botão
+        chatInput.disabled = true; // Desabilita o input
+        floodWarningElement.style.display = 'block'; // Mostra o aviso
+        document.querySelector('.input-area').classList.add('flood-active'); // Adiciona classe para ajuste de layout
+
+        // O countdown agora é baseado no tempo restante até blockEndTime
+        let countdown = Math.ceil((blockEndTime - now) / 1000);
+        floodCountdownElement.textContent = countdown; // Exibe o tempo inicial
+
+        // Limpa intervalos anteriores para evitar duplicidade
+        if (floodCountdownInterval) clearInterval(floodCountdownInterval);
+        if (floodTimeoutId) clearTimeout(floodTimeoutId);
+
+        floodCountdownInterval = setInterval(() => {
+            countdown--;
+            floodCountdownElement.textContent = countdown;
+            if (countdown <= 0) {
+                clearInterval(floodCountdownInterval);
+                endFloodProtection();
+            }
+        }, 1000); // Atualiza a cada segundo
+
+        // Define um timeout para liberar o bloqueio (garantia)
+        floodTimeoutId = setTimeout(() => {
+            endFloodProtection();
+        }, countdown * 1000 + 500); // Pequeno buffer para garantir que não haja atrasos
+    }
+
+        function endFloodProtection() {
+        isFlooded = false;
+        clearTimeout(floodTimeoutId);
+        clearInterval(floodCountdownInterval);
+
+        // INÍCIO: NOVO CÓDIGO - Remover estado do localStorage
+        localStorage.removeItem(LOCAL_STORAGE_FLOOD_START_KEY);
+        localStorage.removeItem(LOCAL_STORAGE_FLOOD_END_KEY);
+        // FIM: NOVO CÓDIGO
+
+        floodWarningElement.style.display = 'none'; // Esconde o aviso
+        document.querySelector('.input-area').classList.remove('flood-active'); // Remove classe de ajuste de layout
+
+        // Reabilita o botão e o input. updateCharCountAndButton já lida com outras condições.
+        updateCharCountAndButton();
+        chatInput.disabled = false; // Garante que o input seja reativado.
+    }
+    // FIM: NOVO CÓDIGO - Variáveis e Lógica Anti-Flood
+    
+        // INÍCIO: NOVO CÓDIGO - Função para inicializar proteção contra flood ao carregar a página
+    function initializeFloodProtection() {
+        const floodEndTime = localStorage.getItem(LOCAL_STORAGE_FLOOD_END_KEY);
+        const now = Date.now();
+
+        if (floodEndTime && parseInt(floodEndTime) > now) {
+            // Se houver um floodEndTime salvo e ele ainda não expirou
+            isFlooded = true;
+            sendBtn.disabled = true;
+            chatInput.disabled = true;
+            floodWarningElement.style.display = 'block';
+            document.querySelector('.input-area').classList.add('flood-active');
+
+            let countdown = Math.ceil((parseInt(floodEndTime) - now) / 1000);
+            floodCountdownElement.textContent = countdown;
+
+            // Limpa intervalos anteriores para evitar duplicidade
+            if (floodCountdownInterval) clearInterval(floodCountdownInterval);
+            if (floodTimeoutId) clearTimeout(floodTimeoutId);
+
+            floodCountdownInterval = setInterval(() => {
+                countdown--;
+                floodCountdownElement.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(floodCountdownInterval);
+                    endFloodProtection();
+                }
+            }, 1000);
+
+            floodTimeoutId = setTimeout(() => {
+                endFloodProtection();
+            }, countdown * 1000 + 500);
+
+        } else {
+            // Se não há bloqueio salvo ou se ele já expirou, garante que tudo esteja limpo
+            endFloodProtection();
+        }
+    }
+    // FIM: NOVO CÓDIGO
+    
+    
+const replyPreviewContainer = document.getElementById('replyPreviewContainer');
+const replyPreviewName = document.getElementById('replyPreviewName');
+const replyPreviewText = document.getElementById('replyPreviewText');
+const cancelReplyBtn = document.getElementById('cancelReplyBtn');
+    // ... suas variáveis e funções existentes ...
+
+    // --- FUNÇÃO PARA FORMATAR A MENSAGEM COM HASHTAGS ---
+    function formatMessageWithHashtags(message) {
+        // Expressão regular para encontrar # seguido de caracteres que não são espaço nem outros símbolos
+        // A hashtag termina com um espaço ou um símbolo (exceto #)
+        const hashtagRegex = /(#[\p{L}\p{N}_-]+)/gu; // Suporta caracteres Unicode, números e underscore
+
+        // Substitui a hashtag encontrada por ela mesma envolvida em um span com a classe 'hashtag'
+        return message.replace(hashtagRegex, '<span class="hashtag">$&</span>');
+    }
+
+    // --- FUNÇÃO PARA ATUALIZAR O PREVIEW DA RESPOSTA COM HASHTAGS ---
+    function updatePreviewWithHashtags(message) {
+        // Esta função é quase igual à de cima, mas o regex é levemente ajustado se necessário
+        // E ela retorna o texto para ser atribuído via innerHTML
+        const hashtagRegex = /(#[\p{L}\p{N}_-]+)/gu;
+        return message.replace(hashtagRegex, '<span class="hashtag">$&</span>');
+    }
+
+    // ... suas funções sendMsg, setReply, cancelReply, etc. ...
+
+function setReply(msgData, msgId) {
+    // console.log("Configurando reply para:", msgData); // Mantenha para debug se quiser
+    replyingTo = {
+        id: msgId,
+        user: msgData.user,
+        message: msgData.message
+    };
+    replyPreviewName.textContent = msgData.user;
+    const previewMessage = msgData.message.substring(0, 50) + (msgData.message.length > 50 ? '...' : '');
+    replyPreviewText.innerHTML = updatePreviewWithHashtags(previewMessage);
+
+    // --- INÍCIO DA MODIFICAÇÃO CORRIGIDA AQUI ---
+    // Primeiro, garanta que ele esteja como flex e visível antes de aplicar a classe 'active'
+    replyPreviewContainer.style.display = 'flex';
+    // É importante forçar o navegador a renderizar esta mudança ANTES de adicionar a classe 'active'
+    // Um pequeno timeout (0ms) ou uma leitura de propriedade que force o reflow pode ajudar.
+    // Usaremos requestAnimationFrame para garantir que a mudança de display seja processada.
+    requestAnimationFrame(() => {
+        replyPreviewContainer.classList.add('active'); // Adiciona a classe 'active' para iniciar o fade-in
+    });
+    // --- FIM DA MODIFICAÇÃO CORRIGIDA ---
+
+    chatInput.focus();
+    messageBox.scrollTop = messageBox.scrollHeight;
+}
+    
+
+    function cancelReply() {
+        replyingTo = null;
+
+        // --- INÍCIO DA MODIFICAÇÃO AQUI ---
+        replyPreviewContainer.classList.remove('active'); // Remove a classe 'active' para iniciar o fade-out
+
+        // Adiciona um listener para quando a transição de opacidade terminar
+        // Usamos { once: true } para que o listener seja executado apenas uma vez
+        replyPreviewContainer.addEventListener('transitionend', function handler(event) {
+            // Verifique se a transição que terminou é a da 'opacity'
+            if (event.propertyName === 'opacity' && !replyPreviewContainer.classList.contains('active')) {
+                replyPreviewContainer.style.display = 'none'; // Finalmente esconde o elemento totalmente
+            }
+            // Remove o próprio listener para evitar execuções desnecessárias
+            replyPreviewContainer.removeEventListener('transitionend', handler);
+        }, { once: true });
+        // --- FIM DA MODIFICAÇÃO ---
+    }
+
+cancelReplyBtn.addEventListener('click', cancelReply);
 
 // Função para enviar mensagens
 function sendMsg() {
+  if (isFlooded) { // Se já estiver bloqueado, simplesmente retorna
+            return;
+        }
+  
+  
     const username = localStorage.getItem('chatName');
     if(!username) {
         alert('Escolha um nome antes de enviar mensagens!');
@@ -1305,28 +2076,270 @@ function sendMsg() {
 
     const text = chatInput.value.trim();
     if(!text) return;
+    
+    // INÍCIO: NOVO CÓDIGO - Lógica de Limite e Validação
+        // 1. Impedir envio de mensagem vazia
+        if (text.trim() === '') { // Usamos .trim() para verificar se é *apenas* espaços
+            // Não precisa de alerta, o botão já estará desabilitado visualmente
+            return; 
+        }
+        // 2. Cortar texto se for maior que o limite
+        if (text.length > MAX_CHARS) {
+            text = text.substring(0, MAX_CHARS);
+            // Opcional: alertar o usuário que a mensagem foi cortada
+            // alert(`Sua mensagem foi cortada para ${MAX_CHARS} caracteres.`);
+        }
+        // FIM: NOVO CÓDIGO
   
-  // 🔴 Ban automático
+    // 🔴 Ban automático
     if(mensagemSuspeita(text)){
         banirAutomatico("Mensagem suspeita detectada");
         return; // não envia a mensagem
     }
 
-    // Envia a mensagem para o Firebase
-    push(ref(db, "chat"), {
+messagesSentTimestamps.push(Date.now()); 
+        if (checkFlood()) { // Verifica se este envio ativou o modo flood
+            return; // Se ativou o flood, esta mensagem não será enviada
+        }
+
+
+    const messageData = {
         user: username,
-        userId: UID, // 👈 garante que o UID vá junto
+        userId: UID,
         message: text,
         timestamp: Date.now()
-    });
+    };
+
+    // --- ADICIONE ESTA LÓGICA PARA replyTo ---
+    // --- ADICIONE ESTA LÓGICA PARA replyTo ---
+    if (replyingTo) {
+        messageData.replyTo = {
+            user: replyingTo.user,
+            message: replyingTo.message,
+            originalId: replyingTo.id // <-- INÍCIO: NOVO CÓDIGO - Salva o ID da mensagem original no Firebase
+        }; //
+        cancelReply(); // Limpa o preview após o envio
+    }
+    // --- FIM DA LÓGICA replyTo ---
+
+        // Envia a mensagem para o Firebase e captura a referência para pegar o ID gerado
+    const newMessageRef = push(ref(db, "chat"), messageData);
+    mySentMessageIds.push(newMessageRef.key); // Adiciona o ID da mensagem à sua lista
+    localStorage.setItem('mySentMessageIds', JSON.stringify(mySentMessageIds)); // Salva no localStorage
 
     chatInput.value = '';
 }
 
-// Eventos para envio de mensagens
-sendBtn.addEventListener('click', sendMsg);
-chatInput.addEventListener('keypress', (e) => {
-    if(e.key === 'Enter') sendMsg();
+    // INÍCIO: NOVO CÓDIGO - Eventos para o Input do Chat (com limite e contador)
+        function updateCharCountAndButton() {
+        const currentLength = chatInput.value.length;
+        charCountElement.textContent = `${currentLength} / ${MAX_CHARS}`;
+
+        // INÍCIO: NOVO CÓDIGO - Lógica Anti-Flood na atualização do botão
+        // Primeiro, verifica se o usuário está floodado
+        if (isFlooded) {
+            sendBtn.disabled = true;
+            chatInput.disabled = true; // Desabilita o input
+            sendBtn.style.opacity = '0.5';
+            sendBtn.style.cursor = 'not-allowed';
+            return; // Sai da função, pois o estado de flood tem precedência
+        }
+        // FIM: NOVO CÓDIGO
+
+        // Habilita o input, pois não está floodado (se estava desabilitado por flood)
+        chatInput.disabled = false;
+
+        // Lógica existente de limite de caracteres e mensagem vazia
+        if (currentLength > MAX_CHARS || chatInput.value.trim() === '') {
+            charCountElement.classList.toggle('error', currentLength > MAX_CHARS); // Alterna a classe 'error'
+            sendBtn.disabled = true;
+            sendBtn.style.opacity = '0.5';
+            sendBtn.style.cursor = 'not-allowed';
+        } else {
+            charCountElement.classList.remove('error');
+            sendBtn.disabled = false;
+            sendBtn.style.opacity = '1';
+            sendBtn.style.cursor = 'pointer';
+        }
+    }
+
+    // Inicializa o contador e o estado do botão
+    updateCharCountAndButton();
+
+    // Adiciona listener para qualquer alteração no input (digitar, colar, cortar)
+    chatInput.addEventListener('input', updateCharCountAndButton);
+
+    // Eventos para envio de mensagens
+    sendBtn.addEventListener('click', () => {
+        // Verifica o estado final antes de tentar enviar
+        if (!sendBtn.disabled) {
+            sendMsg();
+            // Após enviar, reseta o contador e o estado do botão para a mensagem vazia
+            chatInput.value = ''; // Limpa o input
+            updateCharCountAndButton(); // Atualiza o contador para 0/300 e desabilita o botão
+        }
+    });
+    chatInput.addEventListener('keypress', (e) => {
+          // INÍCIO: NOVO CÓDIGO - Chamada inicial da proteção anti-flood
+    initializeFloodProtection();
+    // FIM: NOVO CÓDIGO
+        if(e.key === 'Enter' && !sendBtn.disabled) { // Só envia se não estiver desabilitado
+            sendMsg();
+            // Após enviar, reseta o contador e o estado do botão para a mensagem vazia
+            // O evento keypress acontece antes do 'input', então precisamos limpar aqui
+            // e chamar o update para refletir a mensagem vazia
+            setTimeout(() => { // Pequeno delay para garantir que o input.value foi resetado
+                chatInput.value = '';
+                updateCharCountAndButton();
+            }, 0);
+        }
+    });
+    // FIM: NOVO CÓDIGO
+    
+    
+
+
+// ADICIONE ESTE BLOCO DE CÓDIGO APÓS AS FUNÇÕES ACIMA E ANTES DA onChildAdded
+let touchStartX = 0;
+let touchEndX = 0;
+const SWIPE_THRESHOLD = 50; // Pixels para detectar o arrastar
+
+messageBox.addEventListener('touchstart', (e) => {
+    // console.log("touchstart", e.target); // Debug
+    const msgElement = e.target.closest('.msg');
+    if (msgElement) {
+        touchStartX = e.touches[0].clientX;
+        msgElement.dataset.swiping = 'true'; // Sinaliza que o swipe começou neste elemento
+        // Limpa a transição de outras mensagens, se houver
+        document.querySelectorAll('.msg.swiping').forEach(el => {
+            if (el!== msgElement) el.classList.remove('swiping');
+            el.style.transform = '';
+        });
+    }
+}, { passive: true });
+
+messageBox.addEventListener('touchmove', (e) => {
+    const msgElement = e.target.closest('.msg');
+    if (msgElement && msgElement.dataset.swiping === 'true') {
+        touchEndX = e.touches[0].clientX;
+        const deltaX = touchEndX - touchStartX;
+        if (deltaX > 0) { // Somente para arrastar para a direita
+            msgElement.style.transform = `translateX(${Math.min(deltaX, SWIPE_THRESHOLD * 1.5)}px)`;
+        } else {
+            msgElement.style.transform = ''; // Reseta se arrastar para a esquerda
+        }
+    }
+}, { passive: true });
+
+messageBox.addEventListener('touchend', (e) => {
+    const msgElement = e.target.closest('.msg');
+    if (msgElement && msgElement.dataset.swiping === 'true') {
+        const deltaX = touchEndX - touchStartX;
+        
+        if (deltaX > SWIPE_THRESHOLD) {
+            // Detectado arrastar para a direita
+                // Detectado arrastar para a direita
+    const msgId = msgElement.dataset.messageId; // Recupera o ID da mensagem
+    const user = msgElement.querySelector('.message-sender-name').textContent.replace('✦', '').replace('[ADMIN]:', '').trim(); // PEGA O NOME DO NOVO ELEMENTO
+    let messageText = msgElement.querySelector('.message-content').textContent.trim(); // PEGA APENAS O CONTEÚDO PURO DA MENSAGEM
+            
+            // Se for mensagem de admin, remove o prefixo "✦ [ADMIN]:"
+            if (msgElement.classList.contains('admin-msg')) {
+                messageText = messageText.replace('✦ [ADMIN]:', '').trim();
+            }
+
+            // Se for uma mensagem de reply, pegamos o texto da mensagem respondida (se existir)
+            const replyTextBox = msgElement.querySelector('.msg-reply-box.reply-text');
+            if (replyTextBox) {
+                messageText = replyTextBox.textContent.trim();
+            } else {
+                // Senão, pegamos o texto da mensagem normal, limitando para o preview
+                const fullText = msgElement.querySelector('.message-content').textContent;
+                messageText = fullText.replace(new RegExp(`^${user}:`), '').trim(); // Remove o nome do remetente do texto
+            }
+            
+            setReply({ user: user, message: messageText }, msgId);
+
+        }
+        
+        msgElement.classList.remove('swiping');
+        msgElement.style.transform = ''; // Reseta a posição visual
+        delete msgElement.dataset.swiping; // Limpa o sinalizador
+        touchStartX = 0;
+        touchEndX = 0;
+    }
+});
+
+// Implementação para Desktop (arrastar com o mouse)
+let isDragging = false;
+let startX = 0;
+let currentMsgElement = null;
+
+messageBox.addEventListener('mousedown', (e) => {
+    const msgElement = e.target.closest('.msg');
+    if (msgElement) {
+        isDragging = true;
+        startX = e.clientX;
+        currentMsgElement = msgElement;
+        // Limpa a transição de outras mensagens, se houver
+        document.querySelectorAll('.msg.swiping').forEach(el => {
+            if (el!== currentMsgElement) el.classList.remove('swiping');
+            el.style.transform = '';
+        });
+        currentMsgElement.classList.add('swiping'); // Adiciona classe para transição
+    }
+});
+
+messageBox.addEventListener('mousemove', (e) => {
+    if (isDragging && currentMsgElement) {
+        const deltaX = e.clientX - startX;
+        if (deltaX > 0) {
+            currentMsgElement.style.transform = `translateX(${Math.min(deltaX, SWIPE_THRESHOLD * 1.5)}px)`;
+        } else {
+            currentMsgElement.style.transform = '';
+        }
+    }
+});
+
+messageBox.addEventListener('mouseup', (e) => {
+    if (isDragging && currentMsgElement) {
+        const deltaX = e.clientX - startX;
+        if (deltaX > SWIPE_THRESHOLD) {
+            // Detectado arrastar para a direita
+                // Detectado arrastar para a direita
+    const msgId = currentMsgElement.dataset.messageId;
+    const user = currentMsgElement.querySelector('.message-sender-name').textContent.replace('✦', '').replace('[ADMIN]:', '').trim(); // PEGA O NOME DO NOVO ELEMENTO
+    let messageText = currentMsgElement.querySelector('.message-content').textContent.trim(); // PEGA APENAS O CONTEÚDO PURO DA MENSAGEM
+
+            if (currentMsgElement.classList.contains('admin-msg')) {
+                messageText = messageText.replace('✦ [ADMIN]:', '').trim();
+            }
+
+            const replyTextBox = currentMsgElement.querySelector('.msg-reply-box.reply-text');
+            if (replyTextBox) {
+                messageText = replyTextBox.textContent.trim();
+            } else {
+                 const fullText = currentMsgElement.querySelector('.message-content').textContent;
+                 messageText = fullText.replace(new RegExp(`^${user}:`), '').trim();
+            }
+            
+            setReply({ user: user, message: messageText }, msgId);
+        }
+        
+        currentMsgElement.classList.remove('swiping');
+        currentMsgElement.style.transform = ''; // Reseta a posição visual
+        isDragging = false;
+        currentMsgElement = null;
+    }
+});
+
+messageBox.addEventListener('mouseleave', (e) => {
+    if (isDragging && currentMsgElement) {
+        currentMsgElement.classList.remove('swiping');
+        currentMsgElement.style.transform = '';
+        isDragging = false;
+        currentMsgElement = null;
+    }
 });
 
 // ---------- RECEBER MENSAGENS ----------
@@ -1336,19 +2349,113 @@ onChildAdded(ref(db, "chat"), snapshot => {
 
     const msg = document.createElement('div');
     msg.className = 'msg';
-    msg.innerHTML = `<b>${data.user}:</b> ${data.message}`;
+    msg.dataset.messageId = snapshot.key; // Armazena o ID da mensagem para o reply
+    
+        msg.dataset.messageId = snapshot.key; // Armazena o ID da mensagem para o reply
+    msg.dataset.authorId = data.userId; // Armazena o ID do autor da mensagem ATUAL
+
+    // --- CÓDIGO CORRIGIDO PARA O MARCADOR "@ respondeu sua mensagem" ---
+    // Condição 1: Esta mensagem ATUAL está respondendo a alguém (tem 'replyTo')
+    // Condição 2: A mensagem que está sendo respondida (originalId) foi enviada por MIM (window.BBB_USER_ID)
+    // Condição 3: Quem enviou esta mensagem de resposta NÃO sou eu mesmo (data.userId !== window.BBB_USER_ID)
+    if (data.replyTo && mySentMessageIds.includes(data.replyTo.originalId) && data.userId !== window.BBB_USER_ID) {
+        const replyMarker = document.createElement('span');
+        replyMarker.className = 'msg-reply-marker';
+        replyMarker.textContent = '@ respondeu sua mensagem';
+        msg.insertBefore(replyMarker, msg.firstChild); // Adiciona o marcador no início da bolha
+    }
+    // --- FIM DO CÓDIGO CORRIGIDO PARA O MARCADOR ---
+
+    // --- NOVO: Adicionar o nome do remetente como um elemento separado ---
+    const senderNameElement = document.createElement('div');
+    senderNameElement.className = 'message-sender-name';
+    senderNameElement.textContent = data.user;
+    msg.appendChild(senderNameElement); // Adiciona o nome no topo da mensagem
+
+    // --- Lógica para exibir a mensagem respondida (replyTo) ---
+        // --- Lógica para exibir a mensagem respondida (replyTo) ---
+    if (data.replyTo && data.replyTo.originalId) { // INÍCIO: NOVO CÓDIGO - Verifica se originalId existe
+        msg.classList.add('has-reply');
+        const replyBox = document.createElement('div');
+        replyBox.className = 'msg-reply-box';
+        replyBox.dataset.replyToId = data.replyTo.originalId; // <-- NOVO CÓDIGO: Salva o ID da mensagem original no HTML
+        replyBox.innerHTML = `
+            <span class="reply-name">${data.replyTo.user}</span>
+            <span class="reply-text">${data.replyTo.message}</span>
+        `;
+        msg.appendChild(replyBox);
+    }
+
+        const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    // Use innerHTML para renderizar as hashtags formatadas
+    messageContent.innerHTML = formatMessageWithHashtags(data.message); // Apenas o conteúdo da mensagem, sem o nome
+    msg.appendChild(messageContent);
+    
+    // ----------- INÍCIO: ADICIONE ESTE BLOOCO DE CÓDIGO -----------
+    if (data.timestamp) {
+        const date = new Date(data.timestamp);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const timeElement = document.createElement('span');
+        timeElement.className = 'msg-time';
+        timeElement.textContent = `${hours}:${minutes}`;
+        msg.appendChild(timeElement);
+    }
+    // ----------- FIM: ADICIONE ESTE BLOCO DE CÓDIGO -----------
 
     messageBox.appendChild(msg);
-    messageBox.scrollTop = messageBox.scrollHeight;
+
+    // 🔴 MODIFICAÇÃO AQUI: Apenas rola para o final se o usuário não estiver rolando para cima
+    if (!isUserScrollingUp) {
+        messageBox.scrollTop = messageBox.scrollHeight;
+    }
+    // 🔴 FIM DA MODIFICAÇÃO
 
     // 🔎 Verifica admin SEM atrasar a renderização
     get(ref(db, "admins/" + data.userId)).then(snap => {
         if (snap.exists()) {
             msg.classList.add('admin-msg');
-            msg.innerHTML = `✦ <b>${data.user} [ADMIN]:</b> ${data.message}`;
+            // Altere para ajustar o nome do admin no novo elemento
+            senderNameElement.textContent = `✦ ${data.user} [ADMIN]`;
         }
     });
 });
+
+    // INÍCIO: NOVO CÓDIGO - Lógica de Clique na Caixa de Resposta para Rolar e Destacar
+    messageBox.addEventListener('click', (e) => {
+        // Verifica se o clique ocorreu dentro de uma div com a classe 'msg-reply-box'
+        const clickedReplyBox = e.target.closest('.msg-reply-box');
+
+        // Se encontrou uma caixa de resposta clicada E ela possui o ID da mensagem original
+        if (clickedReplyBox && clickedReplyBox.dataset.replyToId) {
+            const originalMessageId = clickedReplyBox.dataset.replyToId;
+            // Encontra a div da mensagem original usando o data-message-id
+            const originalMessageElement = document.querySelector(`.msg[data-message-id="${originalMessageId}"]`);
+
+            if (originalMessageElement) {
+                // 1. Rola suavemente até a mensagem original
+                originalMessageElement.scrollIntoView({
+                    behavior: 'smooth', // Rolagem suave
+                    block: 'center' // Tenta centralizar a mensagem na tela
+                });
+
+                // 2. Adiciona a classe de destaque
+                originalMessageElement.classList.add('highlight');
+
+                // 3. Remove o destaque após alguns segundos (3 segundos = 3000 milissegundos)
+                setTimeout(() => {
+                    originalMessageElement.classList.remove('highlight');
+                }, 3000); 
+            } else {
+                // Caso a mensagem original não seja encontrada (pode ter sido deletada, por exemplo)
+                console.warn(`[Scroll Reply] Mensagem original com ID ${originalMessageId} não encontrada.`);
+                // Opcional: Você pode adicionar um feedback visual para o usuário aqui
+            }
+        }
+    });
+    // FIM: NOVO CÓDIGO - Lógica de Clique na Caixa de Resposta para Rolar e Destacar
+
       
       /* AJUDA */
 const btnAjuda = document.getElementById("btnAjuda");
@@ -1444,8 +2551,47 @@ function fecharModalGenerico(id) {
   }, { once: true });
 }
     
+    // 🔴 INÍCIO: NOVO CÓDIGO - Lógica do Scroll Inteligente e Botão "Mensagens Recentes"
+
+const SCROLL_THRESHOLD = 120; // Aproximadamente 120px do final
+let isUserScrollingUp = false;
+const scrollToBottomBtn = document.getElementById('scrollToBottomBtn');
+
+// Função para checar se o usuário está no final do chat
+function isAtChatBottom() {
+    return messageBox.scrollHeight - messageBox.scrollTop <= messageBox.clientHeight + SCROLL_THRESHOLD;
+}
+
+// Função para rolar o chat para o final
+function smoothScrollToBottom() {
+    messageBox.scrollTo({
+        top: messageBox.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+
+// Lógica de scroll do chat
+messageBox.addEventListener('scroll', () => {
+    // Se o usuário rolou para cima (e não está perto do final)
+    if (messageBox.scrollHeight - messageBox.scrollTop > messageBox.clientHeight + SCROLL_THRESHOLD) {
+        isUserScrollingUp = true;
+        scrollToBottomBtn.classList.add('show'); // Mostra o botão
+    } else {
+        isUserScrollingUp = false;
+        scrollToBottomBtn.classList.remove('show'); // Esconde o botão se estiver no final
+    }
+});
+
+// Clique no botão "Mensagens recentes"
+scrollToBottomBtn.addEventListener('click', () => {
+    smoothScrollToBottom();
+    isUserScrollingUp = false; // Garante que o auto-scroll seja reativado
+    scrollToBottomBtn.classList.remove('show'); // Esconde o botão
+});
+
+// 🔴 FIM: NOVO CÓDIGO
       
 </script>
 
 </body>
-</html>
+    </html>
