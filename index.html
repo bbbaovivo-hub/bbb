@@ -1425,7 +1425,7 @@ button {
 
         <input type="text" id="chatInput" placeholder="Digite sua mensagem...">
         <!-- INÍCIO: NOVO CÓDIGO - Contador de Caracteres -->
-            <div id="charCount" class="char-count">0 / 200</div>
+            <div id="charCount" class="char-count">0 / 150</div>
             <!-- FIM: NOVO CÓDIGO -->
         <button id="sendBtn">➤</button>
     </div>
@@ -1643,7 +1643,7 @@ fecharBtn.onclick = () => {
     setTimeout(() => {
         modal.style.display = "none";
         modal.classList.remove("hide");
-    }, 200); // tempo igual ao da animação
+    }, 150); // tempo igual ao da animação
 };
       
       
@@ -1851,7 +1851,7 @@ const messageBox = document.getElementById('messageBox');
 // --- VARIÁVEIS E FUNÇÕES GLOBAIS PARA O SISTEMA DE REPLY ---
 let replyingTo = null; // Armazena temporariamente os dados da mensagem sendo respondida
     // INÍCIO: NOVO CÓDIGO - Variáveis para Limite de Caracteres
-    const MAX_CHARS = 200;
+    const MAX_CHARS = 150;
     const charCountElement = document.getElementById('charCount');
     // FIM: NOVO CÓDIGO
     
