@@ -1859,9 +1859,9 @@ let replyingTo = null; // Armazena temporariamente os dados da mensagem sendo re
     let mySentMessageIds = JSON.parse(localStorage.getItem('mySentMessageIds')) || [];
     
         // INÍCIO: NOVO CÓDIGO - Variáveis e Lógica Anti-Flood
-    const FLOOD_MESSAGE_LIMIT = 5; // Quantidade de mensagens para ativar o flood
-    const FLOOD_TIME_WINDOW = 5000; // 5 segundos em milissegundos
-    const FLOOD_BLOCK_DURATION = 60; // 30 segundos de bloqueio
+    const FLOOD_MESSAGE_LIMIT = 3; // Quantidade de mensagens para ativar o flood
+    const FLOOD_TIME_WINDOW = 8000; // 5 segundos em milissegundos
+    const FLOOD_BLOCK_DURATION = 120; // 30 segundos de bloqueio
         // INÍCIO: NOVO CÓDIGO - Chaves para localStorage
     const LOCAL_STORAGE_FLOOD_START_KEY = 'floodStartTime';
     const LOCAL_STORAGE_FLOOD_END_KEY = 'floodEndTime';
