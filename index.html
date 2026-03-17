@@ -3259,21 +3259,21 @@ database.ref("avisos").on("child_removed", (snapshot) => {
 
           
           
-// Remova COMPLETAMENTE o bloco 'connectedRef.on("value",...)' e a lógica de 'userOnlineRef'
-// que eu sugeri no auth.onAuthStateChanged anteriormente.
-// A lógica será reescrita do zero.
+
+
+
+
 
 
 
 // -------------------------------------------------------------
-// CÓDIGO REVISADO E AJUSTADO PARA CONTADOR DE ONLINE
+// CÓDIGO REVISADO E AJUSTADO PARA CONTADOR DE ONLINE (SEM LIMPEZA ATIVA)
 // -------------------------------------------------------------
 
 const onlineRef = database.ref("onlineUsers");
 const connectedRef = database.ref(".info/connected"); // Referência ao status de conexão do Firebase
 
 // Gera um ID de sessão único para este navegador/aba.
-// Usamos o localStorage para manter o sessionId único por aba/navegador mesmo após recarregar.
 let sessionId = localStorage.getItem('sessionId');
 if (!sessionId) {
     sessionId = 'session_' + Math.random().toString(36).substr(2, 10);
@@ -3283,7 +3283,7 @@ if (!sessionId) {
 // Cria uma referência específica para a sessão atual no Firebase
 const userSessionRef = onlineRef.child(sessionId);
 
-// Variável para armazenar o offset de tempo do servidor
+// Variável para armazenar o offset de tempo do servidor (ainda útil para outras lógicas, se houver)
 let serverTimeOffset = 0;
 
 // Ouve o offset de tempo do servidor para ajustar o relógio do cliente
@@ -3295,7 +3295,6 @@ database.ref(".info/serverTimeOffset").on("value", (snap) => {
 connectedRef.on("value", (snap) => {
     if (snap.val() === true) {
         // Se estiver conectado, registramos a sessão com um timestamp do SERVIDOR.
-        // Isso é CRUCIAL para a precisão e para a limpeza.
         userSessionRef.set({
             timestamp: firebase.database.ServerValue.TIMESTAMP
         })
@@ -3309,7 +3308,6 @@ connectedRef.on("value", (snap) => {
 
     } else {
         // Se a conexão for perdida, removemos a sessão imediatamente.
-        // Isso ajuda a limpar sessões quando o usuário perde a conexão temporariamente.
         userSessionRef.remove();
     }
 });
@@ -3320,46 +3318,11 @@ onlineRef.on("value", (snapshot) => {
     document.getElementById("onlineCount").textContent = count;
 });
 
-// Adicional: Limpeza ativa de sessões "presas" que o onDisconnect possa ter falhado.
-// Esta rotina é executada periodicamente (a cada 30 segundos)
-// e também uma vez ao carregar a página (DOMContentLoaded).
-const OFFLINE_TIMEOUT = 5 * 60 * 1000; // 5 minutos em milissegundos
-
-function cleanOldOnlineUsers() {
-    // Calculamos o tempo atual do servidor com o offset.
-    const approximateServerTime = Date.now() + serverTimeOffset;
-    const oldestAllowedTimestamp = approximateServerTime - OFFLINE_TIMEOUT;
-
-    // Remove todas as sessões que são mais antigas que o tempo limite,
-    // garantindo que não estamos removendo a sessão ativa deste cliente.
-    onlineRef.orderByChild('timestamp').endAt(oldestAllowedTimestamp).once('value', (snapshot) => {
-        snapshot.forEach((childSnapshot) => {
-            // Verifica se a chave não é a da sessão atual antes de remover
-            if (childSnapshot.key !== sessionId) {
-                onlineRef.child(childSnapshot.key).remove();
-            }
-        });
-    });
-}
-
-// Executa a limpeza uma vez ao carregar a página
-document.addEventListener('DOMContentLoaded', cleanOldOnlineUsers);
-
-// Executa a limpeza periodicamente (a cada 30 segundos)
-setInterval(cleanOldOnlineUsers, 30 * 1000); // A cada 30 segundos
-
 // -------------------------------------------------------------
 // No seu auth.onAuthStateChanged(async (user) => {... })
 // Certifique-se de que NÃO há mais nenhuma lógica de onlineUsers lá dentro.
 // A gestão do status "online" agora é completamente separada da autenticação.
 // -------------------------------------------------------------
-
-
-
-// -------------------------------------------------------------
-// No seu auth.onAuthStateChanged(async (user) => {... })
-// Certifique-se de que NÃO há mais nenhuma lógica de onlineUsers lá dentro.
-// A gestão do status "online" agora é completamente separada da autenticação.
 // -------------------------------------------------------------
           
           
