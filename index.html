@@ -1649,6 +1649,75 @@ body {
         transform: scale(1); /* Garante que não haja animação de 'active' */
     }
     /* >> FIM DO NOVO TRECHO DE CÓDIGO << */
+    
+    
+    
+    /* --- ESTRUTURA ESPECÍFICA PARA DESKTOP (TELAS MAIORES QUE 900px) --- */
+@media (min-width: 901px) {
+    body {
+        padding-top: 40px; /* Adiciona espaçamento na parte superior do body APENAS no desktop (altura do header) */
+        padding-bottom: 25px; /* Barrinha preta embaixo para empurrar o site */
+    }
+
+    .main {
+        flex-direction: row; /* Garante que player e chat fiquem lado a lado */
+        gap: 15px; /* Adiciona um espaçamento de 15px entre o player e o chat */
+        padding-right: 15px; /* Adiciona padding à direita do .main para alinhar com o padding do body */
+        
+        /* NOVO/MODIFICADO: Garante que o main ocupe o espaço restante após o header e o padding inferior */
+        height: calc(100vh - 40px - 25px); /* 100% da viewport - altura do header - padding do body */
+        
+        flex: 1; /* Garante que o main ocupe o espaço restante e seja um item flexível */
+        max-height: calc(100vh - 40px - 25px); /* Adiciona um max-height para evitar overflow */
+    }
+
+    .player-area {
+        flex: 1; /* O player vai ocupar TODO o espaço restante da tela */
+        min-width: 0; /* Essencial para que o player-area possa encolher se a janela for redimensionada */
+        
+        /* NOVO: Garante que a player-area também seja um contêiner flex e ocupe a altura total */
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Ocupa 100% da altura disponível no .main */
+    }
+
+    .chat { /* Este bloco já está OK, apenas re-incluindo para contexto */
+        width: 430px;
+        flex: none;
+        border: 1px solid var(--border);
+        height: 100%; /* CRUCIAL: Chat ocupa 100% da altura do .main */
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+    }
+}
+/* --- FIM DA ESTRUTURA ESPECÍFICA PARA DESKTOP --- */
+
+
+
+
+/* Ajuste de altura para a barra de canais APENAS no desktop */
+@media (min-width: 901px) {
+    .channels {
+        height: 70px; /* Aumenta a altura para 70px no desktop. Ajuste este valor se preferir! */
+    }
+
+    /* NOVO: Garante que o player ocupe o espaço restante na player-area */
+    .player {
+        flex: 1; /* Ocupa todo o espaço vertical disponível dentro da player-area */
+        height: auto; /* Deixa o flex controlar a altura */
+        /* Remova o 'aspect-ratio' aqui no desktop, se ele estiver causando problemas de altura.
+           Se o vídeo precisar manter a proporção, o iframe dentro do player é que deve gerenciar isso.
+           Mas para começar, vamos deixá-lo flexível. Se o vídeo ficar esticado, podemos ajustar. */
+        aspect-ratio: auto; /* Remove a proporção fixa no desktop para ser flexível */
+    }
+
+    .player iframe { /* NOVO: Garante que o iframe preencha o player */
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Ou 'cover' dependendo se você prefere cortar ou ter barras pretas */
+    }
+}
 
 
 </style>
@@ -3515,7 +3584,8 @@ function sendMessage() {
         text: text,
         uid: user.uid, // <--- NOVO: Adiciona o UID do usuário que enviou a mensagem atual
         email: user.email,
-        timestamp: Date.now()
+        timestamp: firebase.database.ServerValue.TIMESTAMP // <<< Use o timestamp do servidor do Firebase!
+
     };
     
     
@@ -3614,7 +3684,8 @@ sendBtn.addEventListener("click", sendMessage);
         }
         const data = snapshot.val();
 
-        const time = new Date(data.timestamp).toLocaleTimeString([], {
+const time = new Date(data.timestamp).toLocaleTimeString([], { // <<< Esta linha!
+
             hour: '2-digit',
             minute: '2-digit'
         });
