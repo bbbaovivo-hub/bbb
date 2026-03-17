@@ -3266,79 +3266,87 @@ database.ref("avisos").on("child_removed", (snapshot) => {
 
 
 // -------------------------------------------------------------
-// NOVO E MELHORADO CÓDIGO PARA CONTADOR DE ONLINE
+// CÓDIGO REVISADO E AJUSTADO PARA CONTADOR DE ONLINE
 // -------------------------------------------------------------
 
 const onlineRef = database.ref("onlineUsers");
-const connectedRef = database.ref(".info/connected");
+const connectedRef = database.ref(".info/connected"); // Referência ao status de conexão do Firebase
 
 // Gera um ID de sessão único para este navegador/aba.
-// Usaremos Math.random().toString(36).substr(2, 10) para um ID curto e único.
-// Não precisamos do timestamp aqui, pois o Firebase vai nos dar um.
+// Usamos o localStorage para manter o sessionId único por aba/navegador mesmo após recarregar.
 let sessionId = localStorage.getItem('sessionId');
 if (!sessionId) {
     sessionId = 'session_' + Math.random().toString(36).substr(2, 10);
     localStorage.setItem('sessionId', sessionId);
 }
 
-// Cria uma referência específica para a sessão atual
+// Cria uma referência específica para a sessão atual no Firebase
 const userSessionRef = onlineRef.child(sessionId);
 
-// Quando a conexão com o Firebase for estabelecida (ou reestabelecida)
+// Variável para armazenar o offset de tempo do servidor
+let serverTimeOffset = 0;
+
+// Ouve o offset de tempo do servidor para ajustar o relógio do cliente
+database.ref(".info/serverTimeOffset").on("value", (snap) => {
+    serverTimeOffset = snap.val() || 0;
+});
+
+// Listener para o status de conexão do Firebase
 connectedRef.on("value", (snap) => {
     if (snap.val() === true) {
-        // Se estiver conectado, definimos a presença com um timestamp do SERVIDOR Firebase.
-        // Isso é crucial para que o timestamp seja sempre preciso, independente do relógio do cliente.
+        // Se estiver conectado, registramos a sessão com um timestamp do SERVIDOR.
+        // Isso é CRUCIAL para a precisão e para a limpeza.
         userSessionRef.set({
-            // userId: auth.currentUser? auth.currentUser.uid : 'anon-' + sessionId, // Opcional: registrar UID do usuário logado
-            timestamp: firebase.database.ServerValue.TIMESTAMP // Timestamp do servidor
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        })
+        .then(() => {
+            // Se o set for bem-sucedido, configura o onDisconnect
+            userSessionRef.onDisconnect().remove();
+        })
+        .catch(error => {
+            console.error("Erro ao definir sessão online ou onDisconnect:", error);
         });
 
-        // E removemos a presença quando o usuário se desconectar (fechar aba, navegador, etc.)
-        userSessionRef.onDisconnect().remove();
+    } else {
+        // Se a conexão for perdida, removemos a sessão imediatamente.
+        // Isso ajuda a limpar sessões quando o usuário perde a conexão temporariamente.
+        userSessionRef.remove();
     }
 });
 
-// Listener para atualizar a contagem de usuários online em tempo real
+// Listener para atualizar a contagem de usuários online em tempo real na interface
 onlineRef.on("value", (snapshot) => {
     const count = snapshot.numChildren();
     document.getElementById("onlineCount").textContent = count;
 });
 
-// Adicional: Limpeza de sessões antigas ao carregar a página
-// Esta rotina verifica e remove sessões que podem ter ficado "presas" (o onDisconnect falhou).
-// Usamos o timestamp do SERVIDOR Firebase gravado dentro da sessão para isso.
-// Definimos um "tempo limite" (por exemplo, 5 minutos = 300.000 ms)
+// Adicional: Limpeza ativa de sessões "presas" que o onDisconnect possa ter falhado.
+// Esta rotina é executada periodicamente (a cada 30 segundos)
+// e também uma vez ao carregar a página (DOMContentLoaded).
 const OFFLINE_TIMEOUT = 5 * 60 * 1000; // 5 minutos em milissegundos
 
-onlineRef.once('value', (snapshot) => {
-    const now = Date.now(); // Obtemos o tempo local agora (para referência inicial)
-    
-    // Obter o timestamp do servidor Firebase via.info/serverTimeOffset
-    // Isso nos dá a diferença entre o tempo do cliente e o tempo do servidor
-    database.ref(".info/serverTimeOffset").once("value", (offsetSnap) => {
-        const serverTimeOffset = offsetSnap.val() || 0;
-        const serverTime = now + serverTimeOffset; // Calcula a hora aproximada do servidor
-        
-        snapshot.forEach((childSnapshot) => {
-            const sessionData = childSnapshot.val();
-            const sessionTimestamp = sessionData?.timestamp;
+function cleanOldOnlineUsers() {
+    // Calculamos o tempo atual do servidor com o offset.
+    const approximateServerTime = Date.now() + serverTimeOffset;
+    const oldestAllowedTimestamp = approximateServerTime - OFFLINE_TIMEOUT;
 
-            if (sessionTimestamp && (serverTime - sessionTimestamp > OFFLINE_TIMEOUT)) {
-                // Se o timestamp da sessão existe E a sessão é mais antiga que o tempo limite,
-                // removemos a sessão (garantindo que não é a sessão atual do usuário).
-                if (childSnapshot.key!== sessionId) { // Não remove a própria sessão ativa!
-                     onlineRef.child(childSnapshot.key).remove();
-                }
-            } else if (!sessionTimestamp) {
-                // Se a sessão não tem um timestamp (um registro antigo ou bugado), remove também.
-                if (childSnapshot.key!== sessionId) {
-                    onlineRef.child(childSnapshot.key).remove();
-                }
+    // Remove todas as sessões que são mais antigas que o tempo limite,
+    // garantindo que não estamos removendo a sessão ativa deste cliente.
+    onlineRef.orderByChild('timestamp').endAt(oldestAllowedTimestamp).once('value', (snapshot) => {
+        snapshot.forEach((childSnapshot) => {
+            // Verifica se a chave não é a da sessão atual antes de remover
+            if (childSnapshot.key !== sessionId) {
+                onlineRef.child(childSnapshot.key).remove();
             }
         });
     });
-});
+}
+
+// Executa a limpeza uma vez ao carregar a página
+document.addEventListener('DOMContentLoaded', cleanOldOnlineUsers);
+
+// Executa a limpeza periodicamente (a cada 30 segundos)
+setInterval(cleanOldOnlineUsers, 30 * 1000); // A cada 30 segundos
 
 // -------------------------------------------------------------
 // No seu auth.onAuthStateChanged(async (user) => {... })
