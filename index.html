@@ -3267,63 +3267,57 @@ database.ref("avisos").on("child_removed", (snapshot) => {
 
 
 // -------------------------------------------------------------
-// CÓDIGO REVISADO E AJUSTADO PARA CONTADOR DE ONLINE (SEM LIMPEZA ATIVA)
+// CONTADOR DE USUÁRIOS ONLINE (VERSÃO CORRIGIDA E ESTÁVEL)
 // -------------------------------------------------------------
 
 const onlineRef = database.ref("onlineUsers");
-const connectedRef = database.ref(".info/connected"); // Referência ao status de conexão do Firebase
+const connectedRef = database.ref(".info/connected");
 
-// Gera um ID de sessão único para este navegador/aba.
-let sessionId = localStorage.getItem('sessionId');
+// 🔹 Gera um ID único por ABA (mais preciso que localStorage)
+let sessionId = sessionStorage.getItem('sessionId');
+
 if (!sessionId) {
     sessionId = 'session_' + Math.random().toString(36).substr(2, 10);
-    localStorage.setItem('sessionId', sessionId);
+    sessionStorage.setItem('sessionId', sessionId);
 }
 
-// Cria uma referência específica para a sessão atual no Firebase
+// 🔹 Referência da sessão atual
 const userSessionRef = onlineRef.child(sessionId);
 
-// Variável para armazenar o offset de tempo do servidor (ainda útil para outras lógicas, se houver)
+// 🔹 (Opcional) Offset do servidor
 let serverTimeOffset = 0;
 
-// Ouve o offset de tempo do servidor para ajustar o relógio do cliente
 database.ref(".info/serverTimeOffset").on("value", (snap) => {
     serverTimeOffset = snap.val() || 0;
 });
 
-// Listener para o status de conexão do Firebase
+// 🔹 Controle de conexão
 connectedRef.on("value", (snap) => {
     if (snap.val() === true) {
-        // Se estiver conectado, registramos a sessão com um timestamp do SERVIDOR.
+
+        // Marca usuário como online com timestamp do servidor
         userSessionRef.set({
             timestamp: firebase.database.ServerValue.TIMESTAMP
         })
         .then(() => {
-            // Se o set for bem-sucedido, configura o onDisconnect
+            // 🔥 REMOVE AUTOMATICAMENTE quando desconectar
             userSessionRef.onDisconnect().remove();
         })
         .catch(error => {
-            console.error("Erro ao definir sessão online ou onDisconnect:", error);
+            console.error("Erro ao registrar sessão:", error);
         });
-
-    } else {
-        // Se a conexão for perdida, removemos a sessão imediatamente.
-        userSessionRef.remove();
     }
 });
 
-// Listener para atualizar a contagem de usuários online em tempo real na interface
+// 🔹 Atualiza contador em tempo real
 onlineRef.on("value", (snapshot) => {
     const count = snapshot.numChildren();
-    document.getElementById("onlineCount").textContent = count;
+    
+    const el = document.getElementById("onlineCount");
+    if (el) {
+        el.textContent = count;
+    }
 });
-
-// -------------------------------------------------------------
-// No seu auth.onAuthStateChanged(async (user) => {... })
-// Certifique-se de que NÃO há mais nenhuma lógica de onlineUsers lá dentro.
-// A gestão do status "online" agora é completamente separada da autenticação.
-// -------------------------------------------------------------
-// -------------------------------------------------------------
           
           
           
