@@ -3272,14 +3272,16 @@ database.ref("avisos").on("child_removed", (snapshot) => {
 
 
 
+
+
 // -------------------------------------------------------------
-// CONTADOR DE USUÁRIOS ONLINE (VERSÃO CORRIGIDA E ESTÁVEL)
+// CONTADOR DE USUÁRIOS ONLINE (VERSÃO FINAL COM LIMPEZA SEGURA)
 // -------------------------------------------------------------
 
 const onlineRef = database.ref("onlineUsers");
 const connectedRef = database.ref(".info/connected");
 
-// 🔹 Gera um ID único por ABA (mais preciso que localStorage)
+// 🔹 Gera um ID único por ABA
 let sessionId = sessionStorage.getItem('sessionId');
 
 if (!sessionId) {
@@ -3290,23 +3292,14 @@ if (!sessionId) {
 // 🔹 Referência da sessão atual
 const userSessionRef = onlineRef.child(sessionId);
 
-// 🔹 (Opcional) Offset do servidor
-let serverTimeOffset = 0;
-
-database.ref(".info/serverTimeOffset").on("value", (snap) => {
-    serverTimeOffset = snap.val() || 0;
-});
-
 // 🔹 Controle de conexão
 connectedRef.on("value", (snap) => {
     if (snap.val() === true) {
 
-        // Marca usuário como online com timestamp do servidor
         userSessionRef.set({
             timestamp: firebase.database.ServerValue.TIMESTAMP
         })
         .then(() => {
-            // 🔥 REMOVE AUTOMATICAMENTE quando desconectar
             userSessionRef.onDisconnect().remove();
         })
         .catch(error => {
@@ -3315,10 +3308,34 @@ connectedRef.on("value", (snap) => {
     }
 });
 
-// 🔹 Atualiza contador em tempo real
+// 🔹 🔥 HEARTBEAT (mantém usuário vivo)
+setInterval(() => {
+    userSessionRef.update({
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+}, 20000); // a cada 20 segundos
+
+// 🔹 🔥 LIMPEZA AUTOMÁTICA (remove fantasmas)
+setInterval(() => {
+    onlineRef.once("value", (snapshot) => {
+        const now = Date.now();
+
+        snapshot.forEach((child) => {
+            const data = child.val();
+            const lastTime = data.timestamp || 0;
+
+            // Se passou mais de 60 segundos → remove
+            if (now - lastTime > 60000) {
+                child.ref.remove();
+            }
+        });
+    });
+}, 30000); // roda a cada 30 segundos
+
+// 🔹 Atualiza contador
 onlineRef.on("value", (snapshot) => {
     const count = snapshot.numChildren();
-    
+
     const el = document.getElementById("onlineCount");
     if (el) {
         el.textContent = count;
